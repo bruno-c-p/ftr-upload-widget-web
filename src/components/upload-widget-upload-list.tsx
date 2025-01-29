@@ -1,7 +1,7 @@
 import { UploadWidgetUploadItem } from './upload-widget-upload-item'
 
 export function UploadWidgetUploadList() {
-  const isUploadListEmpty = true
+  const isUploadListEmpty = false
   return (
     <div className="px-3 flex flex-col gap-3">
       <span className="text-xs font-medium">
