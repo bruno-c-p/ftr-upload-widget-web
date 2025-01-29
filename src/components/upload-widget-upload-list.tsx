@@ -1,12 +1,20 @@
-import { Minimize2 } from 'lucide-react'
+import { UploadWidgetUploadItem } from './upload-widget-upload-item'
 
 export function UploadWidgetUploadList() {
+  const isUploadListEmpty = true
   return (
-    <div className="w-full p-4 py-2 bg-white/2 border-zinc-800 border-b flex items-center justify-between">
-      <span className="text-sm font-medium">Upload files</span>
-      <button type="button">
-        <Minimize2 strokeWidth={1.5} className="size-4" />
-      </button>
+    <div className="px-3 flex flex-col gap-3">
+      <span className="text-xs font-medium">
+        Uploaded files <span className="text-zinc-400">(2)</span>
+      </span>
+      {isUploadListEmpty ? (
+        <span className="text-xs text-zinc-400">No uploads added</span>
+      ) : (
+        <div className="space-y-2">
+          <UploadWidgetUploadItem />
+          <UploadWidgetUploadItem />
+        </div>
+      )}
     </div>
   )
 }
