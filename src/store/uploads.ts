@@ -1,3 +1,4 @@
+import { CanceledError } from 'axios'
 import { enableMapSet } from 'immer'
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
@@ -8,6 +9,8 @@ export interface Upload {
   file: File
   abortController: AbortController
   status: 'progress' | 'success' | 'error' | 'cancelled'
+  originalSizeInBytes: number
+  uploadSizeInBytes: number
 }
 
 interface UploadState {
@@ -25,13 +28,29 @@ export const useUploads = create<UploadState, [['zustand/immer', never]]>(
       if (!upload) return
       try {
         await uploadFileToStorage(
-          { file: upload.file },
+          {
+            file: upload.file,
+            onProgress(sizeInBytes) {
+              set(state => {
+                state.uploads.set(uploadId, {
+                  ...upload,
+                  uploadSizeInBytes: sizeInBytes,
+                })
+              })
+            },
+          },
           { signal: upload.abortController.signal }
         )
         set(state => {
           state.uploads.set(uploadId, { ...upload, status: 'success' })
         })
       } catch (error) {
+        if (error instanceof CanceledError) {
+          set(state => {
+            state.uploads.set(uploadId, { ...upload, status: 'cancelled' })
+          })
+          return
+        }
         set(state => {
           state.uploads.set(uploadId, { ...upload, status: 'error' })
         })
@@ -42,9 +61,6 @@ export const useUploads = create<UploadState, [['zustand/immer', never]]>(
       const upload = get().uploads.get(uploadId)
       if (!upload) return
       upload.abortController.abort()
-      set(state => {
-        state.uploads.set(uploadId, { ...upload, status: 'cancelled' })
-      })
     }
 
     function addUploads(files: File[]) {
@@ -56,6 +72,8 @@ export const useUploads = create<UploadState, [['zustand/immer', never]]>(
           file,
           abortController,
           status: 'progress',
+          originalSizeInBytes: file.size,
+          uploadSizeInBytes: 0,
         }
         set(state => {
           state.uploads.set(uploadId, upload)
